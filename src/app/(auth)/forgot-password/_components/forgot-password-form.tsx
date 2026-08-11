@@ -41,7 +41,7 @@ const ForgotPasswordForm = () => {
   const {mutate, isPending} = useMutation({
     mutationKey: ["forgot-password"],
     mutationFn : async (values:{email:string})=>{
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/forgot-password`,{
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/forget-password`,{
         method : "POST",
         headers: {
           "Content-Type" : "application/json"
@@ -70,7 +70,7 @@ const ForgotPasswordForm = () => {
       <div className="w-full md:w-[570px] bg-white rounded-[16px] border-[2px] border-[#E7E7E7] shadow-[0px_0px_32px_0px_#0000001F] p-5 md:p-6">
         <div className="w-full flex items-center justify-center pb-6">
           <Link href="/">
-          <Image src={logo} alt="auth logo" width={500} height={500} className="w-[174px] h-[174px] object-contain" />
+          <Image src={logo} alt="auth logo" width={500} height={500} className="w-[174px] h-[124px] object-contain" />
           </Link>
         </div>
 

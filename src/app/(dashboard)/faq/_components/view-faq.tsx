@@ -18,10 +18,10 @@ type ViewFaqProps = {
 export default function ViewFaq({ faq, open, onOpenChange }: ViewFaqProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[560px] rounded-lg border-0 bg-white px-6 py-10 shadow-2xl sm:px-8 sm:py-12">
+      <DialogContent className="max-w-[560px] !rounded-[10px] border-0 bg-white px-6 py-10 shadow-2xl sm:px-8 sm:py-12">
         <DialogHeader className="space-y-6 pr-5 text-left">
-          <div><DialogTitle className="text-sm font-semibold text-[#343A40]">Question</DialogTitle><DialogDescription className="mt-2 text-sm leading-6 text-[#59625B]">{faq?.question}</DialogDescription></div>
-          <div><DialogTitle className="text-sm font-semibold text-[#343A40]">Answer</DialogTitle><DialogDescription className="mt-2 text-sm leading-6 text-[#69736B]">{faq?.answer}</DialogDescription></div>
+          <div><DialogTitle className="text-sm md:text-base font-bold text-[#343A40]">Question</DialogTitle><DialogDescription className="mt-2 text-sm leading-6 text-[#59625B] font-medium">{faq?.question}</DialogDescription></div>
+          <div><DialogTitle className="text-sm md:text-base font-bold text-[#343A40]">Answer</DialogTitle><DialogDescription className="mt-2 text-sm leading-6 text-[#69736B] font-medium">{faq?.answer}</DialogDescription></div>
         </DialogHeader>
       </DialogContent>
     </Dialog>

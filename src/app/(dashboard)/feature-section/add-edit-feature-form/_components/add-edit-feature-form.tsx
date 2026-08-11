@@ -179,8 +179,8 @@ export default function AddEditFeatureForm() {
       </div>
 
       <div className="mt-5 flex flex-col-reverse justify-between gap-3 sm:flex-row sm:items-center">
-        <button type="button" disabled={saveMutation.isPending} onClick={() => router.push("/feature-section")} className="h-10 rounded-md border border-[#FF4D6D] px-5 text-sm font-medium text-[#FF4D6D] hover:bg-[#FFF1F3] disabled:opacity-60">Discard Changes</button>
-        <button type="submit" disabled={saveMutation.isPending} className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-primary px-7 text-sm font-medium text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60">
+        <button type="button" disabled={saveMutation.isPending} onClick={() => router.push("/feature-section")} className="h-10 rounded-[10px] border border-[#FF4D6D] px-5 text-sm font-medium text-[#FF4D6D] hover:bg-[#FFF1F3] disabled:opacity-60">Discard Changes</button>
+        <button type="submit" disabled={saveMutation.isPending} className="inline-flex h-10 items-center justify-center gap-2 rounded-[10px] bg-primary px-7 text-sm font-medium text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60">
           {saveMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
           {saveMutation.isPending ? "Saving..." : isEditing ? "Save Changes" : "Create Feature"}
         </button>

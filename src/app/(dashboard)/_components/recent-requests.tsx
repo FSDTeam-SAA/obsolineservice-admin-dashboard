@@ -284,7 +284,7 @@ export default function RecentRequests() {
       </div>
 
       <Dialog open={Boolean(selectedRequest)} onOpenChange={(open) => !open && setSelectedRequest(null)}>
-        <DialogContent className="max-h-[90vh] max-w-[calc(100%_-_2rem)] overflow-y-auto !rounded-2xl border-none bg-white px-6 py-12 shadow-2xl sm:px-10 sm:py-14 md:max-w-[900px] md:px-14 md:py-16 lg:max-w-[1080px] lg:px-16 [&>button]:right-6 [&>button]:top-6 [&>button]:rounded-full [&>button]:p-1 [&>button]:opacity-100 [&>button]:transition-colors [&>button:hover]:bg-[#F1F5F9] [&>button>svg]:h-5 [&>button>svg]:w-5">
+        <DialogContent className="max-h-[90vh] max-w-[calc(100%_-_2rem)] overflow-y-auto !rounded-2xl border-none bg-white p-6 shadow-2xl sm:p-8 md:max-w-[780px] md:p-10 lg:max-w-[850px] [&>button]:right-6 [&>button]:top-6 [&>button]:rounded-full [&>button]:p-1 [&>button]:opacity-100 [&>button]:transition-colors [&>button:hover]:bg-[#F1F5F9] [&>button>svg]:h-5 [&>button>svg]:w-5">
           <DialogHeader className="sr-only">
             <DialogTitle>Request details</DialogTitle>
             <DialogDescription>
@@ -292,7 +292,7 @@ export default function RecentRequests() {
             </DialogDescription>
           </DialogHeader>
           {selectedRequest && (
-            <div className="grid grid-cols-1 gap-x-12 gap-y-7 sm:grid-cols-2 md:grid-cols-3 md:gap-x-16 md:gap-y-8">
+            <div className="grid grid-cols-1 gap-x-8 gap-y-5 sm:grid-cols-2 md:grid-cols-3 md:gap-x-10 md:gap-y-6">
               <Detail label="Name" value={selectedRequest.name} />
               <Detail label="Email" value={selectedRequest.email} />
               <Detail label="Contact" value={selectedRequest.phoneNumber} />
@@ -387,7 +387,7 @@ function EmptyRequestsState({
 function Detail({ label, value, className = "" }: { label: string; value: string | number; className?: string }) {
   return (
     <div className={className}>
-      <p className="text-base font-semibold leading-6 text-[#5B6554]">{label}</p>
+      <p className="text-base font-bold leading-6 text-black">{label}</p>
       <p className="mt-1.5 break-words text-[15px] leading-6 text-[#6B7280] sm:text-base">
         {value}
       </p>

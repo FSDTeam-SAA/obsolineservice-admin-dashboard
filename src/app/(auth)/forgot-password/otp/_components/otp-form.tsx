@@ -71,7 +71,7 @@ export default function OtpForm() {
   const { mutate, isPending } = useMutation({
     mutationKey: ["verify-otp"],
     mutationFn: (values: { otp: string; email: string }) =>
-      fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/verify`, {
+      fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/verify-code`, {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -95,7 +95,7 @@ export default function OtpForm() {
   const { mutate: resentOtp, isPending: resentOtpPending } = useMutation({
     mutationKey: ["fotgot-password"],
     mutationFn: (email: string) =>
-      fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/forgot-password`, {
+      fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/forget-password`, {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -153,7 +153,7 @@ export default function OtpForm() {
       <div className="w-full md:w-[570px] bg-white rounded-[16px] border-[2px] border-[#E7E7E7] shadow-[0px_0px_32px_0px_#0000001F] p-5 md:p-6">
         <div className="w-full flex items-center justify-center pb-6">
           <Link href="/">
-          <Image src={logo} alt="auth logo" width={500} height={500} className="w-[174px] h-[174px] object-contain" />
+          <Image src={logo} alt="auth logo" width={500} height={500} className="w-[174px] h-[124px] object-contain" />
           </Link>
         </div>
 

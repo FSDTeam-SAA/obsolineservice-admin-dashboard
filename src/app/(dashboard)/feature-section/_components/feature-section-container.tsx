@@ -227,7 +227,7 @@ export default function FeatureSectionContainer() {
       )}
 
       <Dialog open={selectedFeature !== null} onOpenChange={(open) => !open && setSelectedFeature(null)}>
-        <DialogContent className="max-w-2xl rounded-xl border-0 bg-white p-7 shadow-2xl sm:p-9">
+        <DialogContent className="max-w-2xl !rounded-[10px] border-0 bg-white p-7 shadow-2xl sm:p-9">
           <DialogHeader>
             <DialogTitle className="pr-8 text-xl text-[#202020]">{selectedFeature?.title}</DialogTitle>
             <DialogDescription>{selectedFeature?.featureName}</DialogDescription>

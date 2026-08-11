@@ -83,7 +83,7 @@ export function DashboardSidebar() {
                   <SidebarMenuButton
                     asChild
                     isActive={isActive}
-                    className="h-11 gap-3 rounded-md px-5 text-sm font-medium text-[#777777] hover:bg-[#f4f3fa] hover:text-[#2d266d] data-[active=true]:bg-[#2d266d] data-[active=true]:text-white data-[active=true]:shadow-[0_2px_4px_rgba(45,38,109,0.18)]"
+                    className="h-11 gap-3 rounded-[10px] px-5 text-sm font-medium text-[#777777] hover:bg-[#f4f3fa] hover:text-[#2d266d] data-[active=true]:bg-[#2d266d] data-[active=true]:text-white data-[active=true]:shadow-[0_2px_4px_rgba(45,38,109,0.18)]"
                   >
                     <Link href={item.url}>
                       <item.icon className="!h-4 !w-4 stroke-[1.5]" />

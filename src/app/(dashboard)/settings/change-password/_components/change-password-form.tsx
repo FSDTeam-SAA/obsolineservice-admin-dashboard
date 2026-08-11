@@ -1,10 +1,14 @@
 "use client"
 
 import { zodResolver } from "@hookform/resolvers/zod"
+import { useMutation } from "@tanstack/react-query"
+import { Check, ChevronLeft, Eye, EyeOff, X } from "lucide-react"
+import { useSession } from "next-auth/react"
+import Link from "next/link"
+import { useState } from "react"
 import { useForm } from "react-hook-form"
+import { toast } from "sonner"
 import { z } from "zod"
-import { useState } from "react";
-import { ChevronLeft, Eye, EyeOff } from "lucide-react";
 
 import { Button } from "@/components/ui/button"
 import {
@@ -16,209 +20,200 @@ import {
   FormMessage,
 } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { useSession } from "next-auth/react";
-import { useMutation } from "@tanstack/react-query";
-import { toast } from "sonner";
-import Link from "next/link";
+import { cn } from "@/lib/utils"
+
+const newPasswordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters.")
+  .regex(/[A-Z]/, "Password must contain an uppercase letter.")
+  .regex(/[a-z]/, "Password must contain a lowercase letter.")
+  .regex(/[0-9]/, "Password must contain a number.")
+  .regex(/[^A-Za-z0-9\s]/, "Password must contain a special character.")
+  .regex(/^\S*$/, "Password cannot contain spaces.")
 
 const formSchema = z
   .object({
-    oldPassword: z
-      .string()
-      .min(6, "Current password must be at least 6 characters."),
-    newPassword: z
-      .string()
-      .min(6, "New password must be at least 6 characters."),
-    confirmPassword: z.string().min(6, "Please confirm your new password."),
+    oldPassword: z.string().min(1, "Current password is required."),
+    newPassword: newPasswordSchema,
+    confirmPassword: z.string().min(1, "Please confirm your new password."),
   })
-  .refine((data) => data.newPassword === data.confirmPassword, {
+  .refine((values) => values.newPassword === values.confirmPassword, {
     path: ["confirmPassword"],
-    message: "Passwords do not match",
-  });
+    message: "Passwords do not match.",
+  })
+
+type ChangePasswordValues = z.infer<typeof formSchema>
+
+interface ChangePasswordResponse {
+  statusCode: number
+  success: boolean
+  message: string
+  data: null
+  responseTime: string
+}
+
+const inputClassName =
+  "h-12 w-full rounded border-[#C0C3C1] px-3 pr-11 text-sm text-[#3B4759] placeholder:text-[#8E959F]"
 
 const ChangePasswordForm = () => {
-    const [showCurrent, setShowCurrent] = useState(false);
-  const [showNew, setShowNew] = useState(false);
-  const [showConfirm, setShowConfirm] = useState(false);
-  const session = useSession();
-  const token = (session?.data?.user as { accessToken: string })?.accessToken;
-  const form = useForm<z.infer<typeof formSchema>>({
+  const [showCurrent, setShowCurrent] = useState(false)
+  const [showNew, setShowNew] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const session = useSession()
+  const token = session.data?.user.accessToken
+
+  const form = useForm<ChangePasswordValues>({
     resolver: zodResolver(formSchema),
-     defaultValues: {
+    defaultValues: {
       oldPassword: "",
       newPassword: "",
       confirmPassword: "",
     },
+    mode: "onChange",
   })
 
-    const { mutate, isPending } = useMutation({
-    mutationKey: ["changePassword"],
-    mutationFn: (values: { oldPassword: string; newPassword: string }) =>
-      fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/change-password`, {
+  const newPassword = form.watch("newPassword")
+  const confirmPassword = form.watch("confirmPassword")
+  const passwordRules = [
+    { label: "Minimum 8 characters (12+ recommended).", valid: newPassword.length >= 8 },
+    { label: "At least one uppercase letter.", valid: /[A-Z]/.test(newPassword) },
+    { label: "At least one lowercase letter.", valid: /[a-z]/.test(newPassword) },
+    { label: "At least one number (0–9).", valid: /[0-9]/.test(newPassword) },
+    { label: "At least one special character (! @ # $ % ^ & * etc.).", valid: /[^A-Za-z0-9\s]/.test(newPassword) },
+    { label: "No spaces allowed.", valid: newPassword.length > 0 && /^\S*$/.test(newPassword) },
+  ]
+
+  const { mutate, isPending } = useMutation({
+    mutationKey: ["change-password"],
+    mutationFn: async (values: Pick<ChangePasswordValues, "oldPassword" | "newPassword">) => {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/auth/change-password`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(values),
-      }).then((res) => res.json()),
-    onSuccess: (data) => {
-      if (!data?.success) {
-        toast.error(data?.message || "Something went wrong");
-        return;
+      })
+      const result: ChangePasswordResponse = await response.json()
+      if (!response.ok || !result.success) {
+        throw new Error(result.message || "Unable to change password.")
       }
-      toast.success(data?.message || "Password Change successfully!");
-      form.reset();
+      return result
     },
-  });
+    onSuccess: (data) => {
+      toast.success(data.message || "Password changed successfully.")
+      form.reset()
+      setShowCurrent(false)
+      setShowNew(false)
+      setShowConfirm(false)
+    },
+    onError: (error: Error) => toast.error(error.message || "Unable to change password."),
+  })
 
-
-  // 2. Define a submit handler.
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values)
-        const payload = {
-      oldPassword: values?.oldPassword,
-      newPassword: values?.newPassword,
-    };
-    mutate(payload);
+  const onSubmit = ({ oldPassword, newPassword }: ChangePasswordValues) => {
+    mutate({ oldPassword, newPassword })
   }
-  return (
-    <div className='py-6 px-8 bg-white rounded-[8px] shadow-[0_4px_8px_rgba(0,0,0,0.12)]'>
-       <div className="pb-2">
-        <Link href="/settings" className="flex items-center gap-1 text-sm text-gray-500 font-medium transition-colors hover:text-primary hover:underline">
-          <ChevronLeft /> Back to Settings
-        </Link>
-      </div>
-      <div>
-        <h4 className='text-xl md:text-2xl text-[#343A40] leading-[120%] font-semibold'>Changes Password</h4>
-        <p className='text-base font-normal text-[#68706A] leading-[120%] pt-3'>Manage your account preferences, security settings, and privacy options.</p>
-      </div>
-      {/* form  */}
-      <div className="pt-10">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
 
-             <div className="grid grid-cols-1 md:grid-cols-2  gap-6">
-            {/* Current Password */}
+  return (
+    <div className="min-h-[480px] rounded-[10px] bg-white p-6 shadow-[0_4px_8px_rgba(0,0,0,0.12)]">
+      <Link
+        href="/settings"
+        className="mb-3 inline-flex items-center gap-1 text-sm font-medium text-[#68706A] transition-colors hover:text-primary"
+      >
+        <ChevronLeft className="h-4 w-4" />
+        Back to Settings
+      </Link>
+
+      <h4 className="text-xl font-semibold leading-tight text-primary md:text-2xl">Changes Password</h4>
+      <p className="pt-1 text-xs text-[#8E959F]">
+        Manage your account preferences, security settings, and privacy options.
+      </p>
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="pt-8">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 md:gap-6">
             <FormField
               control={form.control}
               name="oldPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-medium text-[#3B4759] leading-[120%]">
-                    Current Password
-                  </FormLabel>
+                  <FormLabel className="text-sm font-medium text-[#3B4759]">Current Password</FormLabel>
                   <div className="relative">
                     <FormControl>
-                      <Input
-                        {...field}
-                        type={showCurrent ? "text" : "password"}
-                        placeholder="********"
-                        className="h-[48px] w-full rounded-[4px] border-[#C0C3C1] p-3 placeholder:text-[#8E959F] text-[#3B4759] text-base ring-0 outline-none leading-[120%] font-normal"
-                      />
+                      <Input {...field} type={showCurrent ? "text" : "password"} placeholder="********" className={inputClassName} />
                     </FormControl>
-                    <span
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 cursor-pointer"
-                      onClick={() => setShowCurrent((prev) => !prev)}
-                    >
-                      {showCurrent ? (
-                        <EyeOff size={20} className="" />
-                      ) : (
-                        <Eye size={20} className="" />
-                      )}
-                    </span>
+                    <button type="button" aria-label={showCurrent ? "Hide current password" : "Show current password"} onClick={() => setShowCurrent((value) => !value)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#68706A]">
+                      {showCurrent ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
-                  <FormMessage />
+                  <FormMessage className="text-xs text-red-500" />
                 </FormItem>
               )}
             />
-            {/* New Password */}
+
             <FormField
               control={form.control}
               name="newPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-medium text-[#3B4759] leading-[120%]">
-                    New Password
-                  </FormLabel>
+                  <FormLabel className="text-sm font-medium text-[#3B4759]">New Password</FormLabel>
                   <div className="relative">
                     <FormControl>
-                      <Input
-                        {...field}
-                        type={showNew ? "text" : "password"}
-                        placeholder="********"
-                        className="h-[48px] w-full rounded-[4px] border-[#C0C3C1] p-3 placeholder:text-[#8E959F] text-[#3B4759] text-base ring-0 outline-none leading-[120%] font-normal"
-                      />
+                      <Input {...field} type={showNew ? "text" : "password"} placeholder="********" className={inputClassName} />
                     </FormControl>
-                    <span
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 cursor-pointer"
-                      onClick={() => setShowNew((prev) => !prev)}
-                    >
-                      {showNew ? (
-                        <EyeOff size={20} className="" />
-                      ) : (
-                        <Eye size={20} className="" />
-                      )}
-                    </span>
+                    <button type="button" aria-label={showNew ? "Hide new password" : "Show new password"} onClick={() => setShowNew((value) => !value)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#68706A]">
+                      {showNew ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
-                  <FormMessage />
+                  <FormMessage className="text-xs text-red-500" />
                 </FormItem>
               )}
             />
 
-            {/* Confirm Password */}
             <FormField
               control={form.control}
               name="confirmPassword"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-base font-medium text-[#3B4759] leading-[120%]">
-                    Confirm New Password
-                  </FormLabel>
+                  <FormLabel className="text-sm font-medium text-[#3B4759]">Confirm New Password</FormLabel>
                   <div className="relative">
                     <FormControl>
                       <Input
                         {...field}
                         type={showConfirm ? "text" : "password"}
                         placeholder="********"
-                        className="h-[48px] w-full rounded-[4px] border-[#C0C3C1] p-3 placeholder:text-[#8E959F] text-[#3B4759] text-base ring-0 outline-none leading-[120%] font-normal"
+                        className={cn(inputClassName, confirmPassword && confirmPassword !== newPassword && "border-[#FF3654] focus-visible:ring-[#FF3654]")}
                       />
                     </FormControl>
-                    <span
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-600 cursor-pointer"
-                      onClick={() => setShowConfirm((prev) => !prev)}
-                    >
-                      {showConfirm ? (
-                        <EyeOff size={20} className="" />
-                      ) : (
-                        <Eye size={20} className="" />
-                      )}
-                    </span>
+                    <button type="button" aria-label={showConfirm ? "Hide confirmed password" : "Show confirmed password"} onClick={() => setShowConfirm((value) => !value)} className="absolute right-3 top-1/2 -translate-y-1/2 text-[#68706A]">
+                      {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
                   </div>
-                  <FormMessage />
+                  <FormMessage className="text-xs text-red-500" />
                 </FormItem>
               )}
             />
           </div>
 
+          <ul className="mt-4 space-y-2 text-xs">
+            {passwordRules.map((rule) => (
+              <li key={rule.label} className={cn("flex items-center gap-2", rule.valid ? "text-primary" : "text-[#FF3654]")}>
+                {rule.valid ? <Check className="h-3.5 w-3.5 shrink-0" /> : <X className="h-3.5 w-3.5 shrink-0" />}
+                {rule.label}
+              </li>
+            ))}
+          </ul>
 
-            
-            <div className="w-full flex items-center justify-end gap-6 pt-5">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => form.reset()}
-                className="h-[47px] text-sm text-[#E5102E] leading-[120%] font-medium py-4 px-6 rounded-[6px] border border-[#E5102E]"
-              >
-                Discard Changes
-              </Button>
-
-
-              <Button disabled={isPending} className="h-[47px] text-sm text-[#F8F9FA] leading-[120%] font-medium py-4 px-6 rounded-[6px]" type="submit">{isPending ? "Sending..." : "Save Changes"}</Button>
-            </div>
-          </form>
-        </Form>
-      </div>
+          <div className="flex flex-wrap items-center justify-end gap-4 pt-8">
+            <Button type="button" variant="outline" onClick={() => form.reset()} disabled={isPending} className="h-12 rounded-md border-[#FF3654] px-6 text-sm font-medium text-[#FF3654] hover:bg-[#FFF5F6] hover:text-[#FF3654]">
+              Discard Changes
+            </Button>
+            <Button type="submit" disabled={isPending || !form.formState.isValid} className="h-12 rounded-md px-7 text-sm font-medium text-white">
+              {isPending ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        </form>
+      </Form>
     </div>
   )
 }

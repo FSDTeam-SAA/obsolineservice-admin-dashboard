@@ -2,26 +2,43 @@ export interface UserProfileApiResponse {
   statusCode: number;
   success: boolean;
   message: string;
-  data: IUser;
+  data: UserProfile;
+  responseTime: string;
 }
 
-export interface IUser {
+export interface UserProfile {
   _id: string;
-  firstName: string;
-  lastName: string;
+  name: string;
+  username?: string;
   email: string;
+  dob: string | null;
+  phone: string | null;
+  gender: "male" | "female" | "other";
   role: string;
-  phone: string;
+  stripeAccountId: string | null;
   bio: string;
-  profilePicture: string;
-  status: string;
-  createdAt: string;
-  updatedAt: string;
-  __v: number;
-  verifiedForget: boolean;
-  gender: "male" | "female";
-  location: string;
-  phoneNumber: string;
-  postalCode: string;
-  streetAddress: string;
+  profileImage: string;
+  multiProfileImage: string[];
+  pdfFile: string;
+  otp: string | null;
+  otpExpires: string | null;
+  otpVerified: boolean;
+  resetExpires: string | null;
+  isVerified: boolean;
+  refreshToken: string;
+  hasActiveSubscription: boolean;
+  subscriptionExpireDate: string | null;
+  blockedUsers: string[];
+  language: string;
+  address: Address;
 }
+
+export interface Address {
+  country: string;
+  cityState: string;
+  roadArea: string;
+  postalCode: string;
+  taxId: string;
+}
+
+export const USER_PROFILE_QUERY_KEY = ["user-profile"] as const;
