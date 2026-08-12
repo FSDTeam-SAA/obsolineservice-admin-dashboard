@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import React, { Suspense } from 'react'
 import OtpForm from './_components/otp-form'
-import authImg from '../../../../../public/assets/images/auth_sidebar.png'
+import authImg from '../../../../../public/assets/images/auth_sidebar.jpeg'
 
 const OtpPage = () => {
   return (

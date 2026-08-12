@@ -1,7 +1,7 @@
 import Image from 'next/image'
 import React from 'react'
 import LoginForm from './_components/login-form'
-import authImg from '../../../../public/assets/images/auth_sidebar.png'
+import authImg from '../../../../public/assets/images/auth_sidebar.jpeg'
 
 const LoginPage = () => {
     return (

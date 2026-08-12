@@ -13,7 +13,7 @@ type Feature = {
   featureName: string;
   title: string;
   bodyText: string;
-  features: string[];
+  features?: string[] | string;
   image: string;
 };
 
@@ -31,6 +31,7 @@ export default function AddEditFeatureForm() {
   const { data: session, status } = useSession();
   const token = session?.user.accessToken;
   const inputRef = useRef<HTMLInputElement>(null);
+  const initializedFeatureIdRef = useRef<string | null>(null);
   const [values, setValues] = useState<FormValues>(emptyValues);
   const [featureInput, setFeatureInput] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -43,16 +44,17 @@ export default function AddEditFeatureForm() {
   });
 
   useEffect(() => {
-    if (!data?.data) return;
+    if (!data?.data || !featureId || initializedFeatureIdRef.current === featureId) return;
     const feature = data.data;
     setValues({
-      featureName: feature.featureName,
-      title: feature.title,
-      bodyText: feature.bodyText,
-      features: feature.features ?? [],
+      featureName: feature.featureName ?? "",
+      title: feature.title ?? "",
+      bodyText: feature.bodyText ?? "",
+      features: normalizeFeatures(feature.features),
     });
     setPreviewUrl(feature.image || "");
-  }, [data]);
+    initializedFeatureIdRef.current = featureId;
+  }, [data, featureId]);
 
   useEffect(() => {
     return () => {
@@ -108,11 +110,17 @@ export default function AddEditFeatureForm() {
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const pendingFeature = featureInput.trim();
+    const submittedFeatures = pendingFeature && !values.features.some(
+      (feature) => feature.toLowerCase() === pendingFeature.toLowerCase(),
+    )
+      ? [...values.features, pendingFeature]
+      : values.features;
     const trimmed = {
       featureName: values.featureName.trim(),
       title: values.title.trim(),
       bodyText: values.bodyText.trim(),
-      features: values.features,
+      features: submittedFeatures.map((feature) => feature.trim()).filter(Boolean),
     };
     if (!trimmed.featureName || !trimmed.title || !trimmed.bodyText) {
       toast.error("Please complete all required fields");
@@ -154,21 +162,21 @@ export default function AddEditFeatureForm() {
         </Field>
 
         <Field label="Features">
-          <div className="flex min-h-12 flex-wrap items-center gap-2 rounded-md border border-[#B9C2CE] p-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
+          <div className="mt-2 flex min-h-12 flex-wrap items-center gap-2 rounded-md border border-[#B9C2CE] p-2 focus-within:border-primary focus-within:ring-1 focus-within:ring-primary">
             {values.features.map((feature, index) => (
               <span key={`${feature}-${index}`} className="inline-flex items-center gap-1 rounded-full bg-[#ECEEED] px-3 py-1.5 text-xs text-[#59615B]">
                 {feature}
                 <button type="button" onClick={() => setValues((current) => ({ ...current, features: current.features.filter((_, itemIndex) => itemIndex !== index) }))} className="rounded-full hover:text-red-500" aria-label={`Remove ${feature}`}><X className="h-3.5 w-3.5" /></button>
               </span>
             ))}
-            <input value={featureInput} onChange={(event) => setFeatureInput(event.target.value)} onKeyDown={handleFeatureKeyDown} placeholder={values.features.length ? "Add another..." : "Type a feature and press Enter"} className="h-8 min-w-44 flex-1 bg-transparent px-1 text-sm outline-none placeholder:text-[#A0A8B3]" />
+            <input disabled={saveMutation.isPending} value={featureInput} onChange={(event) => setFeatureInput(event.target.value)} onKeyDown={handleFeatureKeyDown} placeholder={values.features.length ? "Add another..." : "Type a feature and press Enter"} className="h-8 min-w-44 flex-1 bg-transparent px-1 text-sm outline-none placeholder:text-[#A0A8B3] disabled:opacity-60" />
             <button type="button" onClick={addFeature} className="inline-flex h-9 items-center gap-1.5 rounded-full bg-primary px-4 text-sm font-medium text-white hover:bg-primary/90"><Plus className="h-4 w-4" />Add</button>
           </div>
         </Field>
 
         <Field label="Image Upload">
           <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" onChange={handleFileChange} className="sr-only" />
-          <div onDragOver={(event) => event.preventDefault()} onDrop={handleDrop} onClick={() => inputRef.current?.click()} onKeyDown={(event) => (event.key === "Enter" || event.key === " ") && inputRef.current?.click()} role="button" tabIndex={0} className="relative flex min-h-40 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-[#9AA7B8] bg-white p-5 text-center outline-none transition-colors hover:border-primary hover:bg-[#FAFBFF] focus-visible:ring-2 focus-visible:ring-primary">
+          <div onDragOver={(event) => event.preventDefault()} onDrop={handleDrop} onClick={() => inputRef.current?.click()} onKeyDown={(event) => (event.key === "Enter" || event.key === " ") && inputRef.current?.click()} role="button" tabIndex={0} className="relative mt-2 flex min-h-40 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-[#9AA7B8] bg-white p-5 text-center outline-none transition-colors hover:border-primary hover:bg-[#FAFBFF] focus-visible:ring-2 focus-visible:ring-primary">
             {previewUrl ? (
               <><div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url("${previewUrl}")` }} /><div className="absolute inset-0 bg-black/35" /><div className="relative rounded-md bg-white/95 px-4 py-2 text-sm font-medium text-[#334155] shadow-sm">Click or drop to replace image</div></>
             ) : (
@@ -193,6 +201,25 @@ const inputClassName = "mt-2 h-11 w-full rounded-md border border-[#B9C2CE] px-3
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return <label className="block text-sm font-medium text-[#343A40]">{label}{children}</label>;
+}
+
+function normalizeFeatures(features: Feature["features"]): string[] {
+  if (Array.isArray(features)) {
+    return features.filter((feature): feature is string => typeof feature === "string");
+  }
+
+  if (typeof features !== "string") return [];
+
+  try {
+    const parsed: unknown = JSON.parse(features);
+    if (Array.isArray(parsed)) {
+      return parsed.filter((feature): feature is string => typeof feature === "string");
+    }
+  } catch {
+    // Older records may contain comma-separated feature values.
+  }
+
+  return features.split(",").map((feature) => feature.trim()).filter(Boolean);
 }
 
 async function request<T>(path: string, token?: string, init?: RequestInit) {
